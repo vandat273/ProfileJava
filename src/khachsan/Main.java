@@ -64,7 +64,7 @@ public class Main {
         int chon;
         do {
             menu();
-            chon = Integer.parseInt(scanner.nextLine());
+                chon = InputUtils.nhapSoNguyen("Nhập lựa chọn");
             switch (chon) {
                 case 1:
                     kiemTra();
@@ -77,7 +77,7 @@ public class Main {
                     hienThiThongTinDatPhong();
                     break;
                 case 4:
-                    //suaThongTinDatPhong();
+                    suaThongTinDatPhong();
                     break;
                 case 5:
                     deleteBoking();
@@ -92,7 +92,7 @@ public class Main {
                     gopPhong();
                     break;
                 case 9:
-                    ;
+                    totalPaymentBooking();
                     break;
                 case 10:
                     lietKe2023();
@@ -334,8 +334,33 @@ public class Main {
             resultSet.close();
             statement.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
             System.out.println("Lỗi khi hiển thị dữ liệu sản phẩm từ CSDL: " + e.getMessage());
+        }
+    }
+
+    private static void suaThongTinDatPhong() {
+        Scanner scanner = new Scanner(System.in);
+        String ID_Booking = InputUtils.nhapChuoi1("Nhap ma phong can sua");
+        Date Date_check_in = InputUtils.nhapLichDate("Nhap ngay dat phong");
+        Date Date_check_out = InputUtils.nhapLichDate("Nhap ngay ra phong");
+        int Number_of_people = InputUtils.nhapSoNguyen("Nhap so luong nguoi");
+        try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            String query = "UPDATE BOOKING_ROOM SET Date_check_in = ?,Date_check_out = ?, Number_of_people = ? WHERE ID_Booking = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setDate(1, new java.sql.Date(Date_check_in.getTime()));
+            statement.setDate(2, new java.sql.Date(Date_check_out.getTime()));
+            statement.setInt(3, Number_of_people);
+            statement.setString(4, ID_Booking);
+            int rowsUpdated = statement.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("Thong tin dat phong da duoc sua thanh cong.");
+            } else {
+                System.out.println("Không tìm thấy phong nao co ma dat phong " + ID_Booking + " trong CSDL.");
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.out.println("Lỗi khi cập nhật dữ liệu dat phong trong CSDL: " + e.getMessage());
         }
     }
 
@@ -362,7 +387,7 @@ public class Main {
                 System.out.println("Không có phòng nào đuợc booking trong năm  2023.");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
         }
     }
 
@@ -370,8 +395,8 @@ public class Main {
         final String SQL_SELECT_POPULAR_MONTH = "SELECT MONTH(BOOKING_ROOM.Date_check_in) AS Month, COUNT(*) AS Booking_Count " +
                 "FROM BOOKING_ROOM " +
                 "WHERE YEAR(BOOKING_ROOM.Date_check_in) = 2023 " +
-                "GROUP BY MONTH(BOOKING_ROOM.Date_check_in) ";
-        //"ORDER BY Booking_Count DESC ";
+                "GROUP BY MONTH(BOOKING_ROOM.Date_check_in) "+
+                "ORDER BY Booking_Count DESC ";
 
         try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
              PreparedStatement statement = connection.prepareStatement(SQL_SELECT_POPULAR_MONTH);
@@ -402,7 +427,7 @@ public class Main {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
         }
     }
 
@@ -451,82 +476,38 @@ public class Main {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
         }
     }
 
-
-    //    private static void lietKeThangtongdoanhthulonnhat() {
-//        Scanner scanner = new Scanner(System.in);
-//        System.out.print("Nhập ngày tháng bắt đầu (dd/MM/yyyy): ");
-//        String batDau = scanner.nextLine();
-//        System.out.print("Nhập ngày tháng kết thúc (dd/MM/yyyy): ");
-//        String ketThuc = scanner.nextLine();
-//        Date ngayDatBatDau;
-//        Date ngayDatKetThuc;
-//        try {
-//            ngayDatBatDau = new SimpleDateFormat("dd/MM/yyyy").parse(batDau);
-//            ngayDatKetThuc = new SimpleDateFormat("dd/MM/yyyy").parse(ketThuc);
-//
-//            if (ngayDatKetThuc.before(ngayDatBatDau)) {
-//                System.out.println("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
-//                return;
-//            }
-//        } catch (ParseException e) {
-//            System.out.println("Định dạng ngày tháng không hợp lệ.");
-//            return;
-//        }
-//        final String SQL_SELECT_TOTAL_REVENUE = "SELECT SUM(BOOKING_ROOM.Total_payment) AS Total_Revenue " +
-//                "FROM BOOKING_ROOM " +
-//                "WHERE BOOKING_ROOM.Date_check_in BETWEEN ? AND ?";
-//
-//        try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-//             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_TOTAL_REVENUE)) {
-//            statement.setDate(1, new java.sql.Date(ngayDatBatDau.getTime()));
-//            statement.setDate(2, new java.sql.Date(ngayDatKetThuc.getTime()));
-//
-//            try (ResultSet resultSet = statement.executeQuery()) {
-//                if (resultSet.next()) {
-//                    double totalRevenue = resultSet.getDouble("Total_Revenue");
-//                    System.out.printf("Tổng doanh thu trong khoảng thời gian %s ~ %s là: %.2f VND.\n",
-//                            batDau, ketThuc, totalRevenue);
-//                } else {
-//                    System.out.printf("Không có dữ liệu trong khoảng thời gian %s ~ %s.\n",
-//                            batDau, ketThuc);
-//                }
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
     private static void deleteBoking() {
-        do {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Nhập ID Booking cần xóa: ");
-            long deleteID = scanner.nextLong();
-            boolean result = false;
-            String selectSQL = "SELECT ID_Booking FROM BOOKING_ROOM";
-            try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                 PreparedStatement selectStatement = conn.prepareStatement(selectSQL)) {
-                ResultSet resultSet = selectStatement.executeQuery();
-                while (resultSet.next()) {
-                    if (deleteID == resultSet.getLong("ID_Booking")) {
-                        String deleteSQL = "DELETE FROM BOOKING_ROOM WHERE ID_Booking = ?";
-                        try (PreparedStatement deleteStatement = conn.prepareStatement(deleteSQL)) {
-                            deleteStatement.setLong(1, deleteID);
-                            deleteStatement.executeUpdate();
-                            System.out.println("Đã xóa Booking thành công.");
-                        }
-                        result = true;
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Nhập ID Booking cần xóa: ");
+        String deleteID = scanner.nextLine();
+        boolean result = false;
+        String selectSQL = "SELECT ID_Booking FROM BOOKING_ROOM";
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+             PreparedStatement selectStatement = conn.prepareStatement(selectSQL)) {
+            ResultSet resultSet = selectStatement.executeQuery();
+            while (resultSet.next()) {
+                if (deleteID.equalsIgnoreCase(resultSet.getString("ID_Booking"))) {
+                    String deleteSQL = "DELETE FROM BOOKING_ROOM WHERE ID_Booking = ?";
+                    try (PreparedStatement deleteStatement = conn.prepareStatement(deleteSQL)) {
+                        deleteStatement.setString(1, deleteID);
+                        deleteStatement.executeUpdate();
+                        System.out.println("Đã xóa Booking thành công.");
                     }
+                    result = true;
                 }
-                if (!result) {
-                    System.out.println("Không tồn tại ID Booking này !");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        } while (true);
+            if (!result) {
+                System.out.println("Không tồn tại ID Booking này !");
+            }
+        } catch (Exception e) {
+            System.out.println("SQL Exception occurred: " + e.getMessage());
+        }
+
     }
 
 
@@ -556,7 +537,7 @@ public class Main {
                         roomId, checkIn, checkOut, totalPayment);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
         }
     }
 
@@ -648,16 +629,15 @@ public class Main {
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
         }
     }
 
     private static void gopPhong() {
-        InputUtils inputUtils = new InputUtils();
         try (Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
             while (true) {
-                Date checkinDate = inputUtils.nhapLichDate("Nhập ngày checkin");
-                Date checkoutDate = inputUtils.nhapLichDate("Nhập ngày check out");
+                Date checkinDate = InputUtils.nhapLichDate("Nhập ngày checkin");
+                Date checkoutDate = InputUtils.nhapLichDate("Nhập ngày check out");
                 if (checkoutDate.compareTo(checkinDate) < 0) {
                     System.out.println("Invalid date range. Check out date must be after check in date.");
                 } else {
@@ -733,7 +713,59 @@ public class Main {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("SQL Exception occurred: " + e.getMessage());
+        }
+    }
+
+    private static void totalPaymentBooking() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Nhập ID Booking cần tính tổng tiền: ");
+        String ID_Input = scanner.nextLine();
+        boolean result = false; // Biến check điều kiện có tồn tại ID_Booking
+        boolean condition = false; // Biến check điêù kiện Ngày Check in
+        long totalPayment = 0;
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            String selectSQL = "SELECT BR.ID_Booking, BR.ID_Room, BR.Date_check_in, BR.Date_check_out, R.Price \n" + "FROM BOOKING_ROOM as BR\n" + "INNER JOIN ROOM as R ON R.ID_Room = BR.ID_Room\n" + "WHERE ID_Booking = ?";
+            PreparedStatement selectStatement = conn.prepareStatement(selectSQL);
+            selectStatement.setString(1, ID_Input);
+            ResultSet resultSet = selectStatement.executeQuery();
+            while (resultSet.next()) {
+                result = true;
+                Date dateCheckIn = resultSet.getDate("Date_check_in");
+                Date dateCheckOut = resultSet.getDate("Date_check_out");
+                if (dateCheckIn.before(dateCheckOut)) {
+                    String dateDiffSQL = "SELECT DATEDIFF(day,Date_check_in, Date_check_out) AS Date_Booking\n" + "FROM BOOKING_ROOM\n" + "WHERE ID_Booking = ?";
+                    try (PreparedStatement dateDiffStatement = conn.prepareStatement(dateDiffSQL)) {
+                        dateDiffStatement.setString(1, ID_Input);
+                        try (ResultSet resultSet1 = dateDiffStatement.executeQuery()) {
+                            if (resultSet1.next()) {
+                                totalPayment = resultSet.getLong("Price") * resultSet1.getLong("Date_Booking");
+                            }
+                        }
+                    }
+                    condition = true;
+                } else if (dateCheckIn.equals(dateCheckOut)) {
+                    totalPayment = resultSet.getLong("Price");
+                    condition = true;
+                } else {
+                    System.out.println("Ngày Check in không hợp lệ!");
+                }
+                String updateSQL = "UPDATE BOOKING_ROOM SET Total_payment = ? \n" + "WHERE ID_Booking = ?";
+                try (PreparedStatement statement = conn.prepareStatement(updateSQL)) {
+                    statement.setLong(1, totalPayment);
+                    statement.setString(2, ID_Input);
+                    statement.executeUpdate();
+                    if (condition) {
+                        System.out.println("Đã tính tổng số tiền cần thanh toán : " + totalPayment);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("lỗi "+e.getSQLState());;
+        }
+        if (!result) {
+            System.out.println("Không tồn tại ID Booking này!");
         }
     }
 

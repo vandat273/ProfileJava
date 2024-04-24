@@ -21,7 +21,7 @@ public class InputUtils {
     private Connection connection;
 
 
-    public Date nhapLichDate(String message) {
+    public static Date nhapLichDate(String message) {
         Date date = null;
         while (true) {
             System.out.println(message);
@@ -69,10 +69,10 @@ public class InputUtils {
         while (true) {
             System.out.println(message);
             input = scanner.nextLine().trim();
-            if (!input.isEmpty()) {
+            if (!input.isEmpty() && input.matches("^[a-zA-Z0-9]*$")) {
                 break;
             }
-            System.out.println("Không được để trống.");
+            System.out.println("Du lieu da sai hoac khong được để trống.");
         }
         return input;
     }
@@ -96,8 +96,6 @@ public class InputUtils {
         }
         return input;
     }
-
-
 
 
 }
